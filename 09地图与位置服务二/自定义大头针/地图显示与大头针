@@ -1,0 +1,264 @@
+一、地图显示
+
+   1、使用到的框架及相关类
+
+     MapKit框架中MKMapView
+
+   2、MKMapView的常用属性
+
+     1）跟踪类型
+
+       userTrackingMode 
+
+     2）地图类型
+
+       mapType
+
+     3）用户位置，只读属性
+
+       userLocation
+
+     4）当前地图中的所有大头针，只读属性
+
+       annotations
+
+     5）是否可以缩放
+
+       zoomEnabled = NO
+
+     6）是否可以滚动 
+
+       scrollEnabled = NO 
+
+     7）是否可以旋转  
+
+       rotateEnabled = NO;
+
+     8）是否显示3D  
+
+       pitchEnabled = NO
+
+     9）是否显示指南针
+
+       showsCompass = YES
+
+     10）是否显示比例尺
+
+       showsScale = YES
+
+     11）是否显示交通
+
+       showsTraffic = YES
+
+     12）是否显示建筑物
+
+       showsBuildings = YES
+
+   3、MKMapView的常用方法
+
+     1）添加大头针
+
+       addAnnotation
+
+     2）删除大头针
+
+       removeAnnotation
+
+     3）设置地图显示区域，用于控制当前屏幕显示地图范围
+
+       setRegion
+
+     4）设置地图中心点位置
+
+       setCenterCoordinate
+
+     5）将地理坐标（经纬度）转化为数学坐标（UIKit坐标）
+
+       convertCoordinate
+
+     6）将数学坐标转换为地理坐标
+
+       convertPoint
+
+     7）从缓存池中取出大头针
+
+       dequeueReusableAnnotationViewWithIdentifier
+
+     8）选中指定的大头针
+
+       selectAnnotation
+
+     9）取消选中指定的大头针
+
+       deselectAnnotation
+
+   4、代理方法
+
+     1）用户位置发生改变时触发
+
+       - (void)mapView:(MKMapView *)mapView didUpdateUserLocation:(MKUserLocation *)userLocation
+
+     2）显示区域发生改变后触发
+
+       - (void)mapView:(MKMapView *)mapView didUpdateUserLocation:(MKUserLocation *)userLocation
+
+     3）地图加载完成后触发
+
+       - (void)mapViewDidFinishLoadingMap:(MKMapView *)mapView
+
+     4）显示大头针时触发，返回大头针视图，通常自定义大头针可以通过此方法进行
+
+       - (MKAnnotationView *)mapView:(MKMapView *)mapView viewForAnnotation:(id <MKAnnotation>)annotation
+
+     5）点击选中某个大头针时触发
+
+       - (void)mapView:(MKMapView *)mapView didSelectAnnotationView:(MKAnnotationView *)view
+
+     6）取消选中大头针时触发
+
+       - (void)mapView:(MKMapView *)mapView didDeselectAnnotationView:(MKAnnotationView *)view
+
+     7）渲染地图覆盖物时触发
+
+       - (MKOverlayRenderer *)mapView:(MKMapView *)mapView rendererForOverlay:(id <MKOverlay>)overlay
+
+二、在地图上显示自己位置
+
+   1、导入MapKit框架
+
+     #import <MapKit/MapKit.h>
+
+   2、使用定位管理器CLLocationManager做定位授权
+
+     [_locationManager requestWhenInUseAuthorization];
+
+   3、创建MKMapView地图试图,并添加到他的父试图上面，我的_mapView已设为全局变量
+
+      _mapView = [[MKMapView alloc]initWithFrame:self.view.frame];
+      [self.view addSubview:_mapView];
+
+   4、设置相应属性
+
+      //地图类型
+      _mapView.mapType = MKMapTypeStandard;
+
+      //跟踪类型
+      _mapView.userTrackingMode = MKUserTrackingModeFollowWithHeading;
+
+   5、挂代理
+
+      _mapView.delegate = self;
+
+   6、显示用户位置
+
+      _mapView.showsUserLocation = YES;
+
+   7、实现代理方法
+
+      - (void)mapView:(MKMapView *)mapView didUpdateUserLocation:(MKUserLocation *)userLocation{
+
+        CLLocationCoordinate2D 设置该区域的中心点
+
+        MKCoordinateSpan 设置该区域的经纬度跨度
+
+        例如：中国经纬度
+
+        经度范围：73.33E 至 135.05E
+        纬度范围：2.51N  至 53.33N
+
+      }
+
+
+   PS：总结，如果无法显示自己的位置，检查以下几点：
+
+     1、是否将定位管理器设为全局变量
+
+     2、是否在项目中进行定位授权，是否在Info.plist中配置
+
+     3、是否将showsUserLocation设为YES。
+
+     4、是否配置模拟器 点击模拟器 -> 菜单栏Dubug -> Location -> Apple来使模拟器定位，然后使用Custom Location配置模拟器的经纬度。
+
+三、自定义用户位置的大头针
+
+   1、地图上用来显示当前位置信息的点，其实就是一个大头针，接下来我们要自定义这个大头针的样式
+
+   2、使用的框架及相关类
+
+     1)MPAnnotationView,属于MapKit框架
+
+       大头针试图，能够自定义，用户当前位置的大头针默认样式是一个原点，非用户当前位置的大头针，系统默认用一个类似图钉样式的试图显示
+
+     2）MKAnotation，属于MapKit框架
+
+       大头针的数据模型，只要一个NSObject类实现MKAnnotation协议就可以作为一个大头针数据模型、通常重写协议中的coordinate(位置，必须实现的)、title标题、subtitle(子标题)三个属性来自定义大头针的数据模型
+
+     3) MKUserLocation
+
+       系统定义的大头针数据模型专门用来表示用户当前位置大头针上的数据模型，遵守了MKAnnotation协议。
+
+
+   3、MPAnnotationView相关属性
+
+      1）初始化
+
+         initWithAnnotation:reuseIdentifier:
+
+      2）设置大头针图片
+
+         image 
+
+      3）中心点的偏移量 x正右 y正下
+
+         centerOffset 
+            
+      4）插图的偏移量
+
+         calloutOffset 
+
+      5）是否选中
+
+         selected 
+      
+      6）设置是否可以显示 插入视图
+
+         canShowCallout 
+
+      7）左侧插入视图的附加视图
+
+         leftCalloutAccessoryView 
+      
+      8）右侧插入视图的附加视图
+
+         rightCalloutAccessoryView：
+      
+      9）插入视图的详细视图
+
+         detailCalloutAccessoryView 
+      
+      10）是否可以拖拽
+
+         draggable 
+           
+      11）拖拽的状态
+
+         dragState 
+
+   4、MKAnotation相关属性
+
+     1）coordinate 经纬度
+
+     2）title  标题
+
+     3) subtitle 子标题
+
+
+   3、给地图试图添加大头针的原理如下：
+   
+     1）准备大头针试图模型
+
+     2）使用地图试图调用addAnnotaion给地图试图添加大头针数据模型
+
+     3）然后MKMapView会将数据模型传给一个代理方法，该代理方法会将该大头针数据模型包装到一个大头针试图，然后返回该大头针试图、返回的带有数据模型的大头针试图便会显示在地图上，如果返回为nil,则系统会默认一个大头针试图显示在上面
+
+四、长按添加大头针

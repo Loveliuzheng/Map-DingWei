@@ -1,0 +1,288 @@
+一、基本介绍
+ 
+   1、定位,基于GPS
+    
+     定位是一个很常用的功能，打开地图软件后如果用户允许软件定位的话，软件便会自动锁定到手机所在位置，并且地图上的位置会随着手机的移动而移动
+
+   2、反编码
+
+      将经纬度转化为地理坐标
+
+   3、编码
+
+      将地理坐标转化为经纬度
+
+
+二、定位
+
+   1、使用到的框架及相关的类
+
+       CoreLocation框架中的CLLocationManager类
+
+       CoreLocation框架中的CLLocation类
+
+   2、CLLocationManager，定位管理器,用来设置管理定位，设置定位的精度、定位频率等
+
+      常用的方法及属性
+
+         1）当前系统是否打开定位服务，在设置->隐私里控制，这里能够控制手机上所有App的定位授权
+   
+            +(BOOL)locationServiceEnabled
+
+         2）请求获得应用程序使用时定位服务授权，注意使用此方法前在要在info.plist中配置NSLocationWhenInUseUsageDescription
+
+            requestWhenInUseAuthorization
+
+         3）请求获得应用一直使用定位服务授权，注意使用此方法前要在info.plist中配置NSLocationAlwaysUsageDescription
+
+            requestAlwaysAuthorization
+
+         4）设置定位精度
+
+            _locationManager.desiredAccuracy = 10;
+
+         5）设置定位频率
+
+            CLLocationDistance distance=1.0;
+
+            _locationManager.distanceFilter = distance;
+
+            PS：设置定位频率定位频率和定位精度并不应当越精确越好，需要视实际情况而定，因为越精确越耗性能，也就越费电。
+
+         6）开始定位追踪
+
+            startUpdatingLocation
+
+         7）停止定位追踪
+   
+            stopUpdatingLocation
+
+         8）开始导航方向追踪
+ 
+            startUpdatingHeading
+
+         9）停止导航方向追踪
+
+            stopUpdatingHeading
+
+         10）开始对某个区域进行定位追踪，开始对某个区域进行定位后。如果用户进入或者走出某个区域会调用相应的代理方法反馈相关信息
+
+            startMonitoringForRegion
+
+         11）停止对某区域追踪
+
+            stopMonitoringForRegion
+
+      代理方法
+
+         1）位置发生改变后执行
+
+          -(void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations;
+
+         2）导航方向发生变化后执行
+
+          - (void)locationManager:(CLLocationManager *)manager didUpdateHeading:(CLHeading *)newHeading;
+
+         3）进入某个区域之后执行
+
+          - (void)locationManager:(CLLocationManager *)manager didEnterRegion:(CLRegion *)region;
+
+         4）走出某个区域之后执行
+
+          - (void)locationManager:(CLLocationManager *)manager didExitRegion:(CLRegion *)region
+
+         5) 定位失败
+  
+          - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error;
+
+   3、CLLocation：用于表示位置信息，包含地理坐标、海拔等信息，包含在CoreLoaction框架中
+  
+      常用属性
+
+         1) 经纬度
+
+          coordinate   
+
+             latitude:纬度
+		     longitude:经度
+
+         2) 海拔高度
+
+          altitude
+
+         3）位置的精度，为负表明值无效
+
+          horizontalAccuracy
+
+         4）海拔高度的精度，为负表明值无效
+
+            verticalAccuracy //垂直
+            horizontalAccuracy //竖直
+      
+         5）速度
+
+          speed
+
+         6) 日期
+
+          timestamp
+
+         7）当前楼层
+
+          floor.level
+
+         8）course当前设备前进的方向。该值为0°表示向北，90°表示向东，180°表示向南，270°表示向西
+
+            course:0.0 ~ 359.9 真北方向为0.0
+
+      常用方法
+
+       1）得到两个位置之间的距离，通过不断累加，来获取总距离
+         [curLoc distanceFromLocation:nil];
+
+       2）得到两次更新的时间之间的间隔，通过累加来获取行驶总时间
+
+         [curLoc.timestamp timeIntervalSinceDate:lastLoc.timestamp];
+
+五、实现定位步骤
+
+    1、导入框架
+
+     #import <CoreLocation/CoreLocation.h>
+
+    2、声明全局的定位管理器
+
+     CLLocationManager *_locationManager;
+
+    3、实例化定位管理器
+
+     _locationManager = [[CLLocationManager alloc]init];
+
+    4、判断当前系统是否打开定位服务
+
+     if ([CLLocationManager locationServicesEnabled] == NO) {
+
+       //判断是否可以打开设置界面
+       if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]]) {
+
+         //跳转到设置页面
+         [[UIApplication sharedApplication] openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
+
+       };
+
+       return;
+     }
+
+     5、定位授权，如果不授权就无法定位
+
+       [_locationManager requestWhenInUseAuthorization]; 
+
+       // 或[_locationManager requestAlwaysAuthorization];
+
+     6、在info.plist插入两个字段，不添加就无法定位
+
+       //都string类型，和第五步的两种授权，写入的内容会出现在定位授权提示框上
+       NSLocationWhenInUseUsageDescription//使用中授权描述
+       NSLocationAlwaysUsageDescription//永久授权描述
+
+     7、挂上代理
+
+       _locationManager.delegate = self;
+
+     8、设置定位精度
+
+       _locationManager.desiredAccuracy = 10;
+
+     9、设置定位频率
+
+       _locationManager.distanceFilter = 10;
+
+     10、开始追踪,如果不需要定位了记得停止定位，要不然会有很大的耗电量
+
+     11、实现代理方法
+
+       - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray<CLLocation *> *)locations{
+
+       } 
+
+       //定位失败
+       - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error{
+    
+        NSLog(@"定位失败%@",error);
+       }
+
+
+     PS：总结：如果定位失败，首先检查一下几点：
+
+        1、定位管理器是否为全局变量
+
+        2、info.plist中的字段是否配置
+
+        3、在代码中是否做授权处理
+
+        4、如果用模拟器的话，可能是因为没有给模拟器设置经纬度，点击模拟器模拟器 -> 菜单栏Debug -> Location -> CustomLocation -> 设置经纬度，如果想要让模拟器自动定位选择Location —> Apple。
+
+练习：
+
+   1、测速
+   2、指南针
+
+      注意: 获取用户的设备朝向,不需要用户进行定位授权
+      0.使用之前先判断方向服务是否可用
+
+        // magneticHeading : 距离磁北方向的角度
+        // headingAccuracy : 如果是负数,代表当前设备朝向不可用
+         if (newHeading.headingAccuracy < 0) {
+            return;
+         }
+
+      1.获取手机设备朝向(使用的是”磁力计”传感器)不需要用户定位授权
+
+      2.设备朝向(使用的是”磁力计”传感器)和航向course的区别(gps定位确定)
+
+六、编码与反编码
+
+   1、使用到的框架及相关的类
+
+     CoreLocation框架中的CLGeocoder类
+
+        提供两个方法实现编码与反编码
+
+     CoreLocation框架中的CLPlacemark类
+
+        地标类，地标中存储了详细的地址信息
+
+
+  2、CLGeocoder类
+
+     1）编码方法 
+      
+      - (void)geocodeAddressString:(NSString *)addressString completionHandler:(CLGeocodeCompletionHandler)completionHandler;
+
+     2）反编码方法
+
+      - (void)reverseGeocodeLocation:(CLLocation *)location completionHandler:(CLGeocodeCompletionHandler)completionHandler;
+
+  3、CLPlacemark类
+
+      1) location:位置信息
+
+	  2) region:范围
+
+	  3) addressDictionary:地址信息字典
+
+	  更多信息
+		   1、name:地名
+     	   2、thoroughfare:街道
+		   3、subThoroughfare:街道的副标题
+		   4、locality:城市
+		   5、subLocality:城市的相关信息
+		   6、administrativeArea:州 省
+		   7、subAdministrativeArea:州省相关信息
+		   8、postalCode:邮政编码
+		   9、ISOcountryCode:国家编码
+		   10、country:国家
+		   11、inlandWater:水源 湖泊
+		   12、ocean:海洋
+	       13、areasOfInterest:相关的地标
+

@@ -1,0 +1,47 @@
+一、需求：
+
+ 1、批量、分类添加大头针
+   
+ 2、大头针样式设置
+
+    1) MKAnnotationView
+
+       不能设置大头针的颜色
+       不能设置动画效果
+       能够自定义大头针的图片
+
+    2）MKPinAnnotationView
+
+       继承MKAnnotationView
+       可以设置糖的颜色
+       可以设置动画效果
+       不能给自定义大头针的图片
+
+ 3、即自定义大头针的图片又实现动画效果
+
+     //大头针显示在试图上时调用，我在这里给大头针设置显示动画
+     - (void) mapView:(MKMapView *)mapView didAddAnnotationViews:(NSArray *)views {
+    
+      //获取到mapview的frame
+      CGRect visibleRect = _mapView.frame;
+
+      for (MKAnnotationView *view in views) {
+        
+        CGRect endFrame = view.frame;
+        CGRect startFrame = endFrame;
+        startFrame.origin.y = visibleRect.origin.y - startFrame.size.height;
+        view.frame = startFrame;
+        
+        [UIView animateWithDuration:1 animations:^{
+           
+             view.frame = endFrame;
+        }];
+        
+       }
+     }
+
+ 3、自定义大头针试图
+
+ 4、点击大头针的辅助图标
+
+二、百度地图
